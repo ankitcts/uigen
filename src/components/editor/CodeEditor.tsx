@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import Editor from "@monaco-editor/react";
 import { useFileSystem } from "@/lib/contexts/file-system-context";
-import { Code2 } from "lucide-react";
+import { Code2, Loader2 } from "lucide-react";
 
 export function CodeEditor() {
   const { selectedFile, getFileContent, updateFile } = useFileSystem();
@@ -68,6 +68,14 @@ export function CodeEditor() {
       onChange={handleEditorChange}
       onMount={handleEditorDidMount}
       theme="vs-dark"
+      loading={
+        <div className="h-full flex items-center justify-center bg-gray-900">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 text-blue-400 animate-spin" />
+            <p className="text-sm text-gray-400">Loading editor…</p>
+          </div>
+        </div>
+      }
       options={{
         minimap: { enabled: false },
         fontSize: 14,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -33,6 +33,7 @@ interface MainContentProps {
 export function MainContent({ user, project }: MainContentProps) {
   const [activeView, setActiveView] = useState<"preview" | "code">("preview");
   const [mounted, setMounted] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     setMounted(true);
@@ -72,7 +73,7 @@ export function MainContent({ user, project }: MainContentProps) {
                   <Tabs
                     value={activeView}
                     onValueChange={(v) =>
-                      setActiveView(v as "preview" | "code")
+                      startTransition(() => setActiveView(v as "preview" | "code"))
                     }
                   >
                     <TabsList className="bg-white/60 border border-neutral-200/60 p-0.5 h-9 shadow-sm">
@@ -84,7 +85,14 @@ export function MainContent({ user, project }: MainContentProps) {
                 </div>
 
                 {/* Content Area */}
-                <div className="flex-1 overflow-hidden bg-neutral-50">
+                <div className="flex-1 overflow-hidden bg-neutral-50 relative">
+                  {isPending && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-[2px]">
+                      <div className="h-1.5 w-32 rounded-full bg-neutral-200 overflow-hidden">
+                        <div className="h-full w-1/2 bg-neutral-400 rounded-full animate-pulse" />
+                      </div>
+                    </div>
+                  )}
                   {activeView === "preview" ? (
                     <div className="h-full bg-white">
                       <PreviewFrame />

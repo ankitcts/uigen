@@ -6,7 +6,7 @@ import {
   createImportMap,
   createPreviewHTML,
 } from "@/lib/transform/jsx-transformer";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 export function PreviewFrame() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -14,6 +14,7 @@ export function PreviewFrame() {
   const [error, setError] = useState<string | null>(null);
   const [entryPoint, setEntryPoint] = useState<string>("/App.jsx");
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const updatePreview = () => {
@@ -85,6 +86,7 @@ export function PreviewFrame() {
             "sandbox",
             "allow-scripts allow-same-origin allow-forms"
           );
+          setIsLoading(true);
           iframe.srcdoc = previewHTML;
 
           setError(null);
@@ -92,6 +94,7 @@ export function PreviewFrame() {
       } catch (err) {
         console.error("Preview error:", err);
         setError(err instanceof Error ? err.message : "Unknown preview error");
+        setIsLoading(false);
       }
     };
 
@@ -151,10 +154,21 @@ export function PreviewFrame() {
   }
 
   return (
-    <iframe
-      ref={iframeRef}
-      className="w-full h-full border-0 bg-white"
-      title="Preview"
-    />
+    <div className="relative w-full h-full">
+      {isLoading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
+            <p className="text-sm text-neutral-500">Loading preview…</p>
+          </div>
+        </div>
+      )}
+      <iframe
+        ref={iframeRef}
+        className="w-full h-full border-0 bg-white"
+        title="Preview"
+        onLoad={() => setIsLoading(false)}
+      />
+    </div>
   );
 }
