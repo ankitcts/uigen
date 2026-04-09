@@ -153,33 +153,30 @@ export function FileSystemProvider({
         switch (command) {
           case "create":
             if (path && file_text !== undefined) {
+              // createFileWithParents already writes to the VFS; just refresh
               const result = fileSystem.createFileWithParents(path, file_text);
               if (!result.startsWith("Error:")) {
-                createFile(path, file_text);
+                triggerRefresh();
               }
             }
             break;
 
           case "str_replace":
             if (path && old_str !== undefined && new_str !== undefined) {
+              // replaceInFile already updates the VFS; just refresh
               const result = fileSystem.replaceInFile(path, old_str, new_str);
               if (!result.startsWith("Error:")) {
-                const content = fileSystem.readFile(path);
-                if (content !== null) {
-                  updateFile(path, content);
-                }
+                triggerRefresh();
               }
             }
             break;
 
           case "insert":
             if (path && new_str !== undefined && insert_line !== undefined) {
+              // insertInFile already updates the VFS; just refresh
               const result = fileSystem.insertInFile(path, insert_line, new_str);
               if (!result.startsWith("Error:")) {
-                const content = fileSystem.readFile(path);
-                if (content !== null) {
-                  updateFile(path, content);
-                }
+                triggerRefresh();
               }
             }
             break;
@@ -199,16 +196,13 @@ export function FileSystemProvider({
 
           case "delete":
             if (path) {
-              const success = fileSystem.deleteFile(path);
-              if (success) {
-                deleteFile(path);
-              }
+              deleteFile(path);
             }
             break;
         }
       }
     },
-    [fileSystem, createFile, updateFile, deleteFile, renameFile]
+    [fileSystem, triggerRefresh, renameFile, deleteFile]
   );
 
   return (

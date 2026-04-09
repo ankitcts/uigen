@@ -5,6 +5,8 @@ import {
   useContext,
   ReactNode,
   useEffect,
+  useCallback,
+  useRef,
 } from "react";
 import { useChat as useAIChat } from "@ai-sdk/react";
 import { Message } from "ai";
@@ -33,30 +35,45 @@ export function ChatProvider({
 }: ChatContextProps & { children: ReactNode }) {
   const { fileSystem, handleToolCall } = useFileSystem();
 
+  // Keep a ref to projectId so the submit callback always sees the latest value
+  // without needing to be re-created on every projectId change.
+  const projectIdRef = useRef(projectId);
+  projectIdRef.current = projectId;
+
   const {
     messages,
     input,
     handleInputChange,
-    handleSubmit,
+    handleSubmit: aiHandleSubmit,
     status,
   } = useAIChat({
     api: "/api/chat",
     initialMessages,
-    body: {
-      files: fileSystem.serialize(),
-      projectId,
-    },
     onToolCall: ({ toolCall }) => {
       handleToolCall(toolCall);
     },
   });
 
-  // Track anonymous work
+  // Serialize the VFS only at submit time, not on every render
+  const handleSubmit = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      aiHandleSubmit(e, {
+        body: {
+          files: fileSystem.serialize(),
+          projectId: projectIdRef.current,
+        },
+      });
+    },
+    [aiHandleSubmit, fileSystem]
+  );
+
+  // Track anonymous work — only after streaming finishes to avoid serializing
+  // on every streaming token
   useEffect(() => {
-    if (!projectId && messages.length > 0) {
+    if (!projectId && messages.length > 0 && status === "ready") {
       setHasAnonWork(messages, fileSystem.serialize());
     }
-  }, [messages, fileSystem, projectId]);
+  }, [messages, fileSystem, projectId, status]);
 
   return (
     <ChatContext.Provider
